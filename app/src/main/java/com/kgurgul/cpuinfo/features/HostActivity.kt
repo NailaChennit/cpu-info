@@ -18,7 +18,7 @@ package com.kgurgul.cpuinfo.features
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.ActivityManager
+import android.app.KeyguardManager
 import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
@@ -31,7 +31,6 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
@@ -41,8 +40,13 @@ import com.kgurgul.cpuinfo.data.provider.CpuDataProvider
 import com.kgurgul.cpuinfo.databinding.ActivityHostLayoutBinding
 import com.kgurgul.cpuinfo.utils.runOnApiAbove
 import dagger.hilt.android.AndroidEntryPoint
-import java.io.*
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileReader
+import java.io.IOException
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -65,6 +69,9 @@ class HostActivity : AppCompatActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // adb shell pm grant com.kgurgul.cpuinfo.debug android.permission.QUERY_ALL_PACKAGES
+        // adb shell pm grant com.kgurgul.cpuinfo.debug android.permission.PACKAGE_USAGE_STATS
+        // adb shell pm grant com.kgurgul.cpuinfo.debug android.permission.DUMP
         setTheme(R.style.AppThemeBase)
         super.onCreate(savedInstanceState)
         // init async task
@@ -85,15 +92,17 @@ class HostActivity : AppCompatActivity() {
                         arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
             }
         } else {
-            println("permission granted already")
+            //println("permission granted already")
             val fileWriter = File("/storage/emulated/0/Android/media/cpusfreq.csv")
 
             if(!fileWriter.exists()) {
-                var headers = "";
+                var headers = "Date,";
                 for (i in 0 until coreNumber) {
-                    headers += "Cpu$i,"
+                    var minmaxfreq = cpuDataProvider.getMinMaxFreq(i)
+                    val stringminmaxfreq = minmaxfreq.toString().replace(',', '|')
+                    headers += "Cpu$i $stringminmaxfreq,"
                 }
-                headers += "active_process_cgroup"
+                headers += "active_processes,"
                 fileWriter.writeText(headers)
             }
         }
@@ -157,7 +166,7 @@ class HostActivity : AppCompatActivity() {
 
             } catch (e: InterruptedException) {
                 // We were cancelled; stop sleeping!
-                println(e)
+                //println(e)
             }
             return "Executed"
         }
@@ -168,7 +177,6 @@ class HostActivity : AppCompatActivity() {
     }
     @Throws(IOException::class)
     fun get_cgroup_type(path: String?): String {
-        println(path)
         var reader: BufferedReader? = null
         var  cgroup_type: String = ""
         try {
@@ -189,65 +197,89 @@ class HostActivity : AppCompatActivity() {
             reader?.close()
         }
     }
+    @SuppressLint("NewApi")
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     @Throws(IOException::class)
     fun get_cpu_details() {
         val coreNumber = cpuDataProvider.getNumberOfCores()
+        var current_process: String
         while (true) {
-            //SystemClock.sleep(5000000000)
+            SystemClock.sleep(10000)
             val cpusfreq: ArrayList<Float> = ArrayList()
+            var current : Long
             for (i in 0 until coreNumber) {
-                val current = cpuDataProvider.getCurrentFreq(i)
+                if (cpuDataProvider.isonline(i).toInt() == 1){
+                    current = cpuDataProvider.getCurrentFreq(i)
+                }else{
+                    current = -1
+                }
                 cpusfreq.add(current.toFloat())
             }
             // Write in csv
             try {
                 val fileWriter = File("/storage/emulated/0/Android/media/cpusfreq.csv")
-                var info = ""
+                val currentDateTime = this.getCurrentTimestamp()
+                var info = "$currentDateTime,"
                 for (freq in cpusfreq) {
                     info += "$freq,"
                 }
-
-                this.get_current_process()
-                //this.get_cgroup_type("/proc/9377/cgroup")
-                val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
-                val runningAppProcessInfo = activityManager.runningAppProcesses
-                println(runningAppProcessInfo.size.toString() + "siiiiize")
-                for (i in runningAppProcessInfo.indices) {
-                    val cgroup = this.get_cgroup_type(String.format("/proc/%d/cgroup", 8494))
-                    //info += "${runningAppProcessInfo[i].processName}::${cgroup}||"
-                    println(cgroup)
-                    println(runningAppProcessInfo[i].pid)
-                }
-                // get active processes
+                current_process = this.get_current_process()
+                info += "$current_process,"
+                // check if the phone is locked
+                /*val myKM = this.getSystemService(KEYGUARD_SERVICE) as KeyguardManager
+                if (myKM.isKeyguardLocked()) {
+                    //println("the phone is locked")
+                } else {
+                    fileWriter.appendText("\n")
+                    fileWriter.appendText(info)
+                    println(info)
+                    //println("Write CSV successfully!")
+                }*/
                 fileWriter.appendText("\n")
                 fileWriter.appendText(info)
-                println("Write CSV successfully!")
+                println(info)
             } catch (e: Exception) {
-                println("Writing CSV error!")
+                //println("Writing CSV error!")
                 e.printStackTrace()}
-            // end of writing :
-        break
         }
     }
 
-    @SuppressLint("WrongConstant")
+    @SuppressLint("NewApi")
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    private fun get_current_process() {
+    private fun get_current_process() : String {
+        //val active_process: ArrayList<String> = ArrayList()
+        var max_time : Long
+        var last_process : String
         val now = System.currentTimeMillis()
         val sysusagestats = this.getSystemService(USAGE_STATS_SERVICE)
         val usagestats = sysusagestats as UsageStatsManager
         val list_process: Iterator<*> = usagestats.queryUsageStats(4, 0, now).iterator()
         println(list_process)
+        var process = list_process.next() as UsageStats
+        max_time = process.lastTimeUsed
+        last_process = process.packageName
         while (list_process.hasNext()) {
-            val var15 = list_process.next() as UsageStats
-            if (now - var15.lastTimeUsed < 1000){
-                println(var15.packageName)
+            process = list_process.next() as UsageStats
+            if (max_time < process.lastTimeUsed){
+                max_time = process.lastTimeUsed
+                //active_process.add(process.packageName)
+                last_process = process.packageName
             }
+           }
+        return last_process
         }
 
-
-
+    private fun getCurrentDateTime(): String  {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+             (LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))).toString()
+        } else {
+            val SDFormat = SimpleDateFormat("yyyy-MM-dd HH:mm")
+            (SDFormat.format(Date())).toString()
+        }
     }
+    private fun getCurrentTimestamp(): String  {
+        return System.currentTimeMillis().toString()
+    }
+
 
 }

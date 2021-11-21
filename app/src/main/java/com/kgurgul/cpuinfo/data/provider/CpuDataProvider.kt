@@ -1,5 +1,6 @@
 package com.kgurgul.cpuinfo.data.provider
 
+import android.content.Intent.getIntent
 import android.os.Build
 import timber.log.Timber
 import java.io.File
@@ -7,6 +8,7 @@ import java.io.FileFilter
 import java.io.RandomAccessFile
 import java.util.regex.Pattern
 import javax.inject.Inject
+
 
 class CpuDataProvider @Inject constructor() {
 
@@ -32,13 +34,27 @@ class CpuDataProvider @Inject constructor() {
      * assume that core is stopped - value -1)
      */
     fun getCurrentFreq(coreNumber: Int): Long {
-        val currentFreqPath = "${CPU_INFO_DIR}cpu$coreNumber/cpufreq/scaling_cur_freq"
-        return try {
-            RandomAccessFile(currentFreqPath, "r").use { it.readLine().toLong() / 1000 }
+        val currentFreqPath = "${CPU_INFO_DIR}cpu$coreNumber/cpufreq/cpuinfo_cur_freq"
+        var aa: Long
+        try {
+            aa = RandomAccessFile(currentFreqPath, "r").use { it.readLine().toLong() / 1000 }
         } catch (e: Exception) {
             Timber.e(e)
-            -1
+            aa = -1
         }
+        return aa
+    }
+
+    fun isonline(coreNumber: Int): Long {
+        val isonlinepath = "${CPU_INFO_DIR}cpu$coreNumber/online"
+        var isonline: Long
+        try {
+            isonline = RandomAccessFile(isonlinepath, "r").use { it.readLine().toLong()}
+        } catch (e: Exception) {
+            //Timber.e(e)
+            isonline = -1
+        }
+        return isonline
     }
 
     /**
@@ -48,14 +64,16 @@ class CpuDataProvider @Inject constructor() {
     fun getMinMaxFreq(coreNumber: Int): Pair<Long, Long> {
         val minPath = "${CPU_INFO_DIR}cpu$coreNumber/cpufreq/cpuinfo_min_freq"
         val maxPath = "${CPU_INFO_DIR}cpu$coreNumber/cpufreq/cpuinfo_max_freq"
-        return try {
+        var aa :Pair<Long, Long>
+        try {
             val minMhz = RandomAccessFile(minPath, "r").use { it.readLine().toLong() / 1000 }
             val maxMhz = RandomAccessFile(maxPath, "r").use { it.readLine().toLong() / 1000 }
-            Pair(minMhz, maxMhz)
+            aa = Pair(minMhz, maxMhz)
         } catch (e: Exception) {
-            Timber.e(e)
-            Pair(-1, -1)
+            //Timber.e(e)
+            aa = Pair(-1, -1)
         }
+        return aa
     }
 
     /**

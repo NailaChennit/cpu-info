@@ -8,7 +8,11 @@ import com.kgurgul.cpuinfo.utils.DispatchersProvider
 import com.kgurgul.cpuinfo.utils.Utils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
+import java.io.BufferedReader
+import java.io.FileReader
+import java.io.IOException
 import javax.inject.Inject
+
 
 class ObservableCpuData @Inject constructor(
         dispatchersProvider: DispatchersProvider,
@@ -18,8 +22,9 @@ class ObservableCpuData @Inject constructor(
 
     override val dispatcher = dispatchersProvider.io
 
-    override fun createObservable(params: Unit) = flow {
+    public override fun createObservable(params: Unit) = flow {
         while (true) {
+
             val processorName = cpuDataNativeProvider.getCpuName()
             val abi = cpuDataProvider.getAbi()
             val coreNumber = cpuDataProvider.getNumberOfCores()
@@ -40,9 +45,11 @@ class ObservableCpuData @Inject constructor(
             val l4Caches = cpuDataNativeProvider.getL4Caches()
                     ?.joinToString(separator = "\n") { Utils.humanReadableByteCount(it.toLong()) }
                     ?: ""
+            val cpusfreq: ArrayList<Float> = ArrayList()
             for (i in 0 until coreNumber) {
                 val (min, max) = cpuDataProvider.getMinMaxFreq(i)
                 val current = cpuDataProvider.getCurrentFreq(i)
+                cpusfreq.add(current.toFloat())
                 frequencies.add(CpuData.Frequency(min, max, current))
             }
             emit(CpuData(
@@ -57,3 +64,5 @@ class ObservableCpuData @Inject constructor(
         private const val REFRESH_DELAY = 1000L
     }
 }
+
+
