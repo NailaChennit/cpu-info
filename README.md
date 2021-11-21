@@ -1,12 +1,10 @@
 <img src="info/icon_glow.png" width="100" height="100" />
 
-CPU Info [![Build Status](https://travis-ci.org/kamgurgul/cpu-info.svg?branch=master)](https://travis-ci.org/kamgurgul/cpu-info)<br/>
-========
+CPU Info (refactor-in-progress ⛏)
+=================================
 CPU Info provides information about Android device hardware and software.
 Most of the code is written in Kotlin but some old widgets are still in
 Java.
-
-Due to lack of time, this project will be updated sporadically. Right now it is only a sandbox. 
 
 [<img src="https://f-droid.org/badge/get-it-on.png"
      alt="Get it on F-Droid"
@@ -15,12 +13,11 @@ Due to lack of time, this project will be updated sporadically. Right now it is 
      alt="Get it on Google Play"
      height="80">](https://play.google.com/store/apps/details?id=com.kgurgul.cpuinfo)
 
-CI
-===
-* Travis
-
 Still TODO
 ==========
+* Unify architecture - add interactors and data providers
+* Replace layouts with Compose
+* Replace Travis
 * Replace RxJava with coroutines
 * Tests
 * Add benchmarks

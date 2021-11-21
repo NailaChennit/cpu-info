@@ -2,7 +2,7 @@ import com.kgurgul.cpuinfo.buildsrc.Libs
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-parcelize'
 
 apply plugin: 'kotlin-kapt'
 kapt {
@@ -33,6 +33,8 @@ android {
             }
         }
     }
+
+    ndkVersion '22.1.7171670'
 
     signingConfigs {
         releaseVersion {
@@ -69,6 +71,8 @@ android {
 
     buildFeatures {
         dataBinding true
+        viewBinding true
+        compose true
     }
 
     testOptions {
@@ -88,7 +92,14 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
+<<<<<<< HEAD
     ndkVersion '22.0.7026061'
+=======
+
+    composeOptions {
+        kotlinCompilerExtensionVersion Libs.AndroidX.Compose.version
+    }
+>>>>>>> b78e001207cd95f49172d0d2df73530aefc3f906
 }
 
 dependencies {
@@ -102,11 +113,18 @@ dependencies {
     implementation Libs.AndroidX.swipeRefreshLayout
     implementation Libs.AndroidX.constraintLayout
     implementation Libs.AndroidX.multiDex
+    implementation Libs.AndroidX.viewPager2
+    implementation Libs.AndroidX.datastorePreferences
 
     implementation Libs.AndroidX.Lifecycle.extensions
     implementation Libs.AndroidX.Lifecycle.viewModelKtx
     implementation Libs.AndroidX.Lifecycle.liveDataKtx
     implementation Libs.AndroidX.Lifecycle.common
+
+    implementation Libs.AndroidX.Compose.material
+    implementation Libs.AndroidX.Compose.animations
+    implementation Libs.AndroidX.Compose.uiTooling
+    implementation Libs.AndroidX.Compose.swipeToRefresh
 
     implementation Libs.AndroidX.Navigation.fragment
     implementation Libs.AndroidX.Navigation.ui
@@ -120,12 +138,17 @@ dependencies {
     implementation Libs.Coroutines.core
     implementation Libs.Coroutines.android
 
+<<<<<<< HEAD
     implementation Libs.Dagger.android
     implementation Libs.Dagger.viewModelExt
     implementation Libs.Dagger.workManagerExt
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     kapt Libs.Dagger.androidCompiler
     kapt Libs.Dagger.hiltCompiler
+=======
+    implementation Libs.Hilt.android
+    kapt Libs.Hilt.androidCompiler
+>>>>>>> b78e001207cd95f49172d0d2df73530aefc3f906
 
     implementation Libs.Glide.glide
     kapt Libs.Glide.compiler
@@ -137,20 +160,24 @@ dependencies {
     implementation Libs.bus
     implementation Libs.timber
     implementation Libs.relinker
-    implementation Libs.csv
+    implementation Libs.coil
 
     testImplementation Libs.junit
     testImplementation Libs.AndroidX.Test.core
     testImplementation Libs.AndroidX.Test.archCoreTesting
     testImplementation Libs.mockitoCore
     testImplementation Libs.mockitoKotlin
-    testImplementation Libs.robolectric
+    testImplementation Libs.Hilt.androidTesting
+    kaptTest Libs.Hilt.androidCompiler
 
     androidTestImplementation Libs.AndroidX.Test.runner
     androidTestImplementation Libs.AndroidX.Test.rules
     androidTestImplementation Libs.AndroidX.Test.jUnitExt
     androidTestImplementation Libs.AndroidX.Test.Espresso.core
     androidTestImplementation Libs.AndroidX.Test.Espresso.contrib
+    androidTestImplementation Libs.Hilt.androidTesting
+    kaptAndroidTest Libs.Hilt.androidCompiler
+    androidTestImplementation Libs.AndroidX.Compose.uiTests
 
     androidTestUtil Libs.AndroidX.Test.orchestrator
 }

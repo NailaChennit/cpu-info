@@ -13,8 +13,12 @@ import java.io.FileReader
 import java.io.IOException
 import javax.inject.Inject
 
+<<<<<<< HEAD:app/src/main/java/com/kgurgul/cpuinfo/domain/observable/ObservableCpuData.kt
 
 class ObservableCpuData @Inject constructor(
+=======
+class CpuDataObservable @Inject constructor(
+>>>>>>> b78e001207cd95f49172d0d2df73530aefc3f906:app/src/main/java/com/kgurgul/cpuinfo/domain/observable/CpuDataObservable.kt
         dispatchersProvider: DispatchersProvider,
         private val cpuDataProvider: CpuDataProvider,
         private val cpuDataNativeProvider: CpuDataNativeProvider

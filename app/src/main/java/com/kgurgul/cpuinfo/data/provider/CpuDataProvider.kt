@@ -39,6 +39,7 @@ class CpuDataProvider @Inject constructor() {
         try {
             aa = RandomAccessFile(currentFreqPath, "r").use { it.readLine().toLong() / 1000 }
         } catch (e: Exception) {
+<<<<<<< HEAD
             Timber.e(e)
             aa = -1
         }
@@ -53,6 +54,10 @@ class CpuDataProvider @Inject constructor() {
         } catch (e: Exception) {
             //Timber.e(e)
             isonline = -1
+=======
+            Timber.e("getCurrentFreq() - cannot read file")
+            -1
+>>>>>>> b78e001207cd95f49172d0d2df73530aefc3f906
         }
         return isonline
     }
@@ -70,8 +75,13 @@ class CpuDataProvider @Inject constructor() {
             val maxMhz = RandomAccessFile(maxPath, "r").use { it.readLine().toLong() / 1000 }
             aa = Pair(minMhz, maxMhz)
         } catch (e: Exception) {
+<<<<<<< HEAD
             //Timber.e(e)
             aa = Pair(-1, -1)
+=======
+            Timber.e("getMinMaxFreq() - cannot read file")
+            Pair(-1, -1)
+>>>>>>> b78e001207cd95f49172d0d2df73530aefc3f906
         }
         return aa
     }
@@ -93,9 +103,7 @@ class CpuDataProvider @Inject constructor() {
             }
         }
         return try {
-            val dir = File(CPU_INFO_DIR)
-            val files = dir.listFiles(CpuFilter())
-            files.size
+            File(CPU_INFO_DIR).listFiles(CpuFilter())!!.size
         } catch (e: Exception) {
             1
         }
