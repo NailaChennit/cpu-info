@@ -95,7 +95,7 @@ class HostActivity : AppCompatActivity() {
         } else {
             //println("permission granted already")
             val fileWriter = File("/storage/emulated/0/Android/media/cpusfreq.csv")
-
+            // test
             if(!fileWriter.exists()) {
                 var headers = "Date,";
                 for (i in 0 until coreNumber) {
